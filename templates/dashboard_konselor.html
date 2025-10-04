@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}Dashboard Konselor{% endblock %}
+
+{% block content %}
+<style>
+  .section-title{font-weight:700; letter-spacing:.2px}
+  .card-elev{border:0; border-radius:1rem; box-shadow:0 10px 30px rgba(13,110,253,.10)}
+  .card-warn{border:0; border-radius:1rem; box-shadow:0 8px 24px rgba(255,193,7,.18)}
+  .k-chip{font-size:.75rem; padding:.35rem .55rem; border-radius:999px}
+</style>
+
+<div class="container mt-3">
+
+  <!-- header -->
+  <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-3 gap-2">
+    <div>
+      <h1 class="section-title mb-1">Dashboard Konselor</h1>
+      <div class="text-muted">
+        Selamat datang, <strong>{{ (konselor.username if konselor else '-')|e }}</strong>. Anda login sebagai <strong>Konselor</strong>.
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('laporan_konselor') }}" class="btn btn-outline-primary">
+        <i class="fa-solid fa-file-lines me-1"></i> Buat Laporan
+      </a>
+      <a href="{{ url_for('laporan_konselor_export') }}" class="btn btn-outline-secondary">
+        <i class="fa-solid fa-file-csv me-1"></i> Export CSV
+      </a>
+      <a href="{{ url_for('laporan_konselor_pdf') }}" class="btn btn-outline-dark">
+        <i class="fa-regular fa-file-pdf me-1"></i> Export PDF
+      </a>
+    </div>
+  </div>
+
+  <!-- menunggu -->
+  <div class="card card-elev mb-4">
+    <div class="card-header bg-white">
+      <h5 class="mb-0">
+        <i class="fa-solid fa-clock me-1"></i>
+        Keluhan Menunggu Ditangani
+        <span class="badge bg-warning text-dark ms-2">{{ keluhan_menunggu|length if keluhan_menunggu else 0 }}</span>
+      </h5>
+    </div>
+    <div class="card-body">
+      {% if keluhan_menunggu %}
+        <div class="row">
+          {% for kel in keluhan_menunggu %}
+            <div class="col-md-6 mb-3">
+              <div class="card card-warn h-100">
+                <div class="card-header d-flex justify-content-between align-items-center bg-white">
+                  <h6 class="mb-0 text-truncate" title="{{ kel.judul|e }}">{{ kel.judul|e }}</h6>
+                  <span class="k-chip bg-warning-subtle border text-dark">{{ (kel.kategori or '-')|e }}</span>
+                </div>
+                <div class="card-body">
+                  <p class="mb-1"><strong>Mahasiswa:</strong> {{ (kel.mahasiswa.username if kel.mahasiswa else '-')|e }}</p>
+                  <p class="mb-2">
+                    <strong>Tanggal:</strong>
+                    {% if kel.tanggal_dibuat %}{{ kel.tanggal_dibuat.strftime('%d %B %Y, %H:%M') }}{% else %}-{% endif %}
+                  </p>
+                  <p class="text-secondary small mb-3">
+                    {{ (kel.deskripsi or '')[:120]|e }}{% if kel.deskripsi and kel.deskripsi|length > 120 %}...{% endif %}
+                  </p>
+
+                  <div class="d-flex gap-2">
+                    <a href="{{ url_for('detail_keluhan', keluhan_id=kel.id) }}" class="btn btn-sm btn-outline-info">
+                      <i class="fa-solid fa-eye"></i> Detail
+                    </a>
+                    <form method="POST" action="{{ url_for('tangani_keluhan', keluhan_id=kel.id) }}" class="d-inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-sm btn-primary">
+                        <i class="fa-solid fa-hand"></i> Tangani
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-muted mb-0">Tidak ada keluhan yang menunggu ditangani.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- saya tangani -->
+  <div class="card card-elev">
+    <div class="card-header bg-white">
+      <h5 class="mb-0">
+        <i class="fa-solid fa-briefcase me-1"></i>
+        Keluhan yang Saya Tangani
+        <span class="badge bg-primary ms-2">{{ keluhan_saya|length if keluhan_saya else 0 }}</span>
+      </h5>
+    </div>
+    <div class="card-body">
+      {% if keluhan_saya %}
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Judul</th>
+                <th>Mahasiswa</th>
+                <th>Kategori</th>
+                <th>Status</th>
+                <th>Tanggal</th>
+                <th style="width: 260px;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for kel in keluhan_saya %}
+                <tr>
+                  <td class="text-truncate" style="max-width: 260px;" title="{{ kel.judul|e }}">{{ kel.judul|e }}</td>
+                  <td>{{ (kel.mahasiswa.username if kel.mahasiswa else '-')|e }}</td>
+                  <td><span class="badge bg-secondary">{{ (kel.kategori or '-')|e }}</span></td>
+                  <td>
+                    {% if kel.status == 'Diproses' %}
+                      <span class="badge bg-info text-dark">Diproses</span>
+                    {% elif kel.status == 'Selesai' %}
+                      <span class="badge bg-success">Selesai</span>
+                    {% else %}
+                      <span class="badge bg-warning text-dark">Menunggu</span>
+                    {% endif %}
+                  </td>
+                  <td>{% if kel.tanggal_dibuat %}{{ kel.tanggal_dibuat.strftime('%d/%m/%Y') }}{% else %}-{% endif %}</td>
+                  <td>
+                    <div class="d-flex flex-wrap gap-2">
+                      <a href="{{ url_for('detail_keluhan', keluhan_id=kel.id) }}" class="btn btn-sm btn-outline-info">
+                        <i class="fa-solid fa-eye"></i> Detail
+                      </a>
+
+                      {% if kel.status == 'Diproses' %}
+                        <a href="{{ url_for('respon_keluhan', keluhan_id=kel.id) }}" class="btn btn-sm btn-primary">
+                          <i class="fa-solid fa-reply"></i> Respon
+                        </a>
+                        <form method="POST" action="{{ url_for('selesaikan_keluhan', keluhan_id=kel.id) }}" class="d-inline js-confirm-form">
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                          <button type="submit" class="btn btn-sm btn-success">
+                            <i class="fa-solid fa-check"></i> Tandai Selesai
+                          </button>
+                        </form>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-muted mb-0">Anda belum menangani keluhan apapun.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.js-confirm-form').forEach(f => {
+    f.addEventListener('submit', (e) => {
+      if (!confirm('Tandai keluhan ini sebagai SELESAI?')) {
+        e.preventDefault();
+      }
+    });
+  });
+</script>
+{% endblock %}

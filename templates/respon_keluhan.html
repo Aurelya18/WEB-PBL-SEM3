@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}Respon Keluhan{% endblock %}
+
+{% block content %}
+<style>
+  .k-card{border:0; border-radius:1rem; box-shadow:0 10px 30px rgba(13,110,253,.08)}
+  .k-header{border-top-left-radius:1rem; border-top-right-radius:1rem}
+  .prewrap{white-space:pre-wrap}
+  .counter{font-variant-numeric: tabular-nums}
+</style>
+
+<div class="container mt-3">
+  <div class="row">
+    <div class="col-lg-8">
+
+      <!-- Detail Keluhan -->
+      <div class="card k-card mb-4">
+        <div class="card-header bg-white k-header">
+          <h5 class="mb-0">Detail Keluhan</h5>
+        </div>
+        <div class="card-body">
+          <h6 class="mb-1 text-truncate" title="{{ keluhan.judul|e }}">{{ keluhan.judul|e }}</h6>
+          <p class="mb-1"><strong>Mahasiswa:</strong> {{ (keluhan.mahasiswa.username if keluhan.mahasiswa else '-')|e }}</p>
+          <p class="mb-1"><strong>Kategori:</strong> {{ keluhan.kategori|e if keluhan.kategori else '-' }}</p>
+          <p class="mb-3">
+            <strong>Tanggal:</strong>
+            {% if keluhan.tanggal_dibuat %}
+              {{ keluhan.tanggal_dibuat.strftime('%d %B %Y, %H:%M') }}
+            {% else %}-{% endif %}
+          </p>
+          <hr>
+          <h6>Deskripsi:</h6>
+          <div class="prewrap mb-0">{{ (keluhan.deskripsi or '-')|e }}</div>
+        </div>
+      </div>
+
+      <!-- Riwayat Respon -->
+      {% if keluhan.respon and keluhan.respon|length > 0 %}
+      <div class="card k-card mb-4">
+        <div class="card-header bg-white k-header">
+          <h6 class="mb-0">Riwayat Respon</h6>
+        </div>
+        <div class="card-body">
+          {% for respon in keluhan.respon %}
+            <div class="border-start border-primary ps-3 mb-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <strong>{{ (respon.konselor.username if respon.konselor else 'Konselor')|e }}</strong>
+                <small class="text-muted">
+                  {% if respon.tanggal_respon %}{{ respon.tanggal_respon.strftime('%d %B %Y, %H:%M') }}{% endif %}
+                </small>
+              </div>
+              <div class="prewrap mt-2 mb-0">{{ respon.pesan|e }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Form Respon Baru -->
+      <div class="card k-card">
+        <div class="card-header bg-white k-header">
+          <h5 class="mb-0">Berikan Respon</h5>
+        </div>
+        <div class="card-body">
+          <form id="formRespon" method="POST" action="{{ url_for('respon_keluhan', keluhan_id=keluhan.id) }}" autocomplete="off">
+            <!-- CSRF token (wajib) -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="mb-3">
+              <label for="pesan" class="form-label">Pesan Respon <span class="text-danger">*</span></label>
+              <textarea
+                class="form-control"
+                id="pesan"
+                name="pesan"
+                rows="6"
+                required
+                minlength="3"
+                maxlength="4000"
+                placeholder="Tuliskan respon/saran untuk mahasiswa..."
+                aria-describedby="pesanHelp pesanCounter"></textarea>
+              <div id="pesanHelp" class="form-text">Gunakan bahasa yang empatik, jelas, dan membantu.</div>
+              <div id="pesanCounter" class="form-text counter text-end">0 / 4000</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="status" class="form-label">Update Status <span class="text-danger">*</span></label>
+              <select class="form-control" id="status" name="status" required>
+                <option value="Diproses" {% if keluhan.status == 'Diproses' %}selected{% endif %}>Masih Diproses</option>
+                <option value="Selesai"  {% if keluhan.status == 'Selesai'  %}selected{% endif %}>Tandai Selesai</option>
+              </select>
+              <div class="form-text">Pilih <strong>Selesai</strong> jika keluhan sudah tertangani.</div>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+              <a href="{{ url_for('dashboard_konselor') }}" class="btn btn-secondary">
+                <i class="fa-solid fa-arrow-left"></i> Kembali
+              </a>
+              <button id="btnSubmit" type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-paper-plane"></i> Kirim Respon
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Sidebar Tips -->
+    <div class="col-lg-4 mt-4 mt-lg-0">
+      <div class="card k-card">
+        <div class="card-header bg-white k-header">
+          <h6 class="mb-0"><i class="fa-solid fa-lightbulb me-1"></i> Tips Konseling</h6>
+        </div>
+        <div class="card-body">
+          <ul class="list-unstyled mb-0 small">
+            <li class="mb-2">✓ Dengarkan dengan empati</li>
+            <li class="mb-2">✓ Berikan respon yang konstruktif</li>
+            <li class="mb-2">✓ Tawarkan solusi yang realistis</li>
+            <li class="mb-2">✓ Jaga kerahasiaan klien</li>
+            <li class="mb-2">✓ Follow up jika diperlukan</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card k-card mt-3">
+        <div class="card-header bg-white k-header">
+          <h6 class="mb-0"><i class="fa-solid fa-circle-info me-1"></i> Panduan Respon</h6>
+        </div>
+        <div class="card-body">
+          <p class="small mb-2"><strong>Struktur respon yang baik:</strong></p>
+          <ol class="small mb-0">
+            <li>Akui perasaan mahasiswa</li>
+            <li>Analisis situasi</li>
+            <li>Berikan saran konkret</li>
+            <li>Tawarkan dukungan lanjutan</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('formRespon');
+    const btn  = document.getElementById('btnSubmit');
+    const ta   = document.getElementById('pesan');
+    const counter = document.getElementById('pesanCounter');
+    const sel  = document.getElementById('status');
+    const MAX  = parseInt(ta.getAttribute('maxlength'), 10) || 4000;
+
+    // Auto-resize textarea
+    const autoresize = () => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; };
+    ta.addEventListener('input', autoresize); setTimeout(autoresize, 0);
+
+    // Counter textarea
+    const updateCount = () => { counter.textContent = `${ta.value.length} / ${MAX}`; };
+    ta.addEventListener('input', updateCount); updateCount();
+
+    // Konfirmasi jika pilih "Selesai"
+    form.addEventListener('submit', function (e) {
+      if (sel && sel.value === 'Selesai') {
+        const ok = confirm('Tandai keluhan ini sebagai SELESAI?');
+        if (!ok) { e.preventDefault(); return; }
+      }
+      // Cegah double submit
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Mengirim...';
+    });
+  });
+</script>
+{% endblock %}

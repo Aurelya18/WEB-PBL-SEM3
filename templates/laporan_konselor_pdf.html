@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}PDF Laporan Konselor{% endblock %}
+
+{% block content %}
+{% set p_from = start_date or date_from %}
+{% set p_to   = end_date or date_to %}
+{% set p_q    = request.args.get('q','') %}
+{% set p_status = status_filter or request.args.get('status','Semua') %}
+{% set pdf_url = url_for('laporan_konselor_pdf', **{'from': p_from, 'to': p_to, 'status': p_status, 'q': p_q}) %}
+
+<style>
+  .card-elev{border:0;border-radius:1rem;box-shadow:0 10px 30px rgba(13,110,253,.10)}
+</style>
+
+<div class="container mt-3">
+  <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-3 gap-2">
+    <div>
+      <h1 class="mb-1">PDF Laporan Konselor</h1>
+      <div class="text-muted">Pratinjau/unduh PDF hasil rekap sesuai filter.</div>
+    </div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-secondary" href="{{ url_for('laporan_konselor', **{'start_date': p_from, 'end_date': p_to, 'status': p_status, 'q': p_q}) }}">
+        <i class="fa-solid fa-arrow-left"></i> Kembali
+      </a>
+      <a class="btn btn-outline-dark" href="{{ pdf_url }}">
+        <i class="fa-regular fa-file-pdf"></i> Download PDF
+      </a>
+    </div>
+  </div>
+
+  <div class="card card-elev">
+    <div class="card-body">
+      <object data="{{ pdf_url }}" type="application/pdf" width="100%" height="820px">
+        <p class="text-muted">
+          PDF tidak dapat dimuat di browser ini. <a href="{{ pdf_url }}">Klik untuk mengunduh</a>.
+        </p>
+      </object>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Riwayat Keluhan{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-history"></i> Riwayat Keluhan Anda</h2>
+        <a href="{{ url_for('ajukan_keluhan') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Ajukan Keluhan Baru
+        </a>
+    </div>
+    
+    {% if keluhan_list %}
+        <div class="row">
+            {% for keluhan in keluhan_list %}
+            <div class="col-md-6 mb-3">
+                <div class="card shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">{{ keluhan.judul|e }}</h6>
+                        {% if keluhan.status == 'Menunggu' %}
+                            <span class="badge bg-warning text-dark">{{ keluhan.status }}</span>
+                        {% elif keluhan.status == 'Diproses' %}
+                            <span class="badge bg-info text-white">{{ keluhan.status }}</span>
+                        {% elif keluhan.status == 'Selesai' %}
+                            <span class="badge bg-success">{{ keluhan.status }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ keluhan.status|e }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">
+                            <strong>Kategori:</strong> {{ keluhan.kategori|e }}<br>
+                            <strong>Tanggal:</strong>
+                            {% if keluhan.tanggal_dibuat %}
+                                {{ keluhan.tanggal_dibuat.strftime('%d %B %Y, %H:%M') }}
+                            {% else %}
+                                <em>Belum tercatat</em>
+                            {% endif %}
+                        </p>
+                        
+                        {% if keluhan.konselor %}
+                            <p class="text-muted">
+                                <i class="fas fa-user"></i> Ditangani oleh: {{ keluhan.konselor.username|e }}
+                            </p>
+                        {% endif %}
+                        
+                        <p class="card-text">
+                            {{ keluhan.deskripsi[:100]|e }}{% if keluhan.deskripsi and keluhan.deskripsi|length > 100 %}...{% endif %}
+                        </p>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                {% if keluhan.respon %}
+                                    <i class="fas fa-comments"></i> {{ keluhan.respon|length }} respon
+                                {% else %}
+                                    <i class="fas fa-clock"></i> Belum ada respon
+                                {% endif %}
+                            </small>
+                            <a href="{{ url_for('detail_keluhan', keluhan_id=keluhan.id) }}" 
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i> Detail
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">Belum Ada Keluhan</h4>
+            <p class="text-muted">Anda belum pernah mengajukan keluhan. Mulai konsultasi dengan konselor kami!</p>
+            <a href="{{ url_for('ajukan_keluhan') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Ajukan Keluhan Pertama
+            </a>
+        </div>
+    {% endif %}
+    
+    <div class="d-flex justify-content-center mt-4">
+        <a href="{{ url_for('dashboard_mahasiswa') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

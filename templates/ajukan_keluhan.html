@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Ajukan Keluhan{% endblock %}
+
+{% block content %}
+<style>
+  .k-card{border:0; border-radius:1rem; box-shadow:0 10px 30px rgba(13,110,253,.08)}
+  .k-header{border-top-left-radius:1rem; border-top-right-radius:1rem}
+  .counter{font-variant-numeric: tabular-nums}
+</style>
+
+<div class="container mt-3">
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+      <div class="card k-card">
+        <div class="card-header bg-primary text-white k-header">
+          <h4 class="mb-0"><i class="fa-solid fa-pen-to-square me-1"></i> Ajukan Keluhan Baru</h4>
+        </div>
+
+        <div class="card-body">
+          <!-- Form Ajukan Keluhan -->
+          <form id="formKeluhan" method="POST" action="{{ url_for('ajukan_keluhan') }}" autocomplete="on">
+            <!-- CSRF token (WAJIB untuk POST) -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <!-- Judul (maks 200 agar aman dengan kolom DB String(200)) -->
+            <div class="mb-3">
+              <label for="judul" class="form-label">Judul Keluhan <span class="text-danger">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                id="judul"
+                name="judul"
+                required
+                maxlength="200"
+                autocomplete="on"
+                placeholder="Masukkan judul singkat keluhan Anda"
+                aria-describedby="judulHelp">
+              <div id="judulHelp" class="form-text">
+                Contoh: <em>Kesulitan memahami materi statistik</em> (maks. 200 karakter).
+              </div>
+            </div>
+
+            <!-- Kategori -->
+            <div class="mb-3">
+              <label for="kategori" class="form-label">Kategori Keluhan <span class="text-danger">*</span></label>
+              <select class="form-control" id="kategori" name="kategori" required aria-describedby="katHelp">
+                <option value="">-- Pilih Kategori --</option>
+                <option value="Akademik">Akademik</option>
+                <option value="Pribadi">Masalah Pribadi</option>
+                <option value="Sosial">Masalah Sosial</option>
+                <option value="Karir">Konseling Karir</option>
+                <option value="Keuangan">Masalah Keuangan</option>
+                <option value="Keluarga">Masalah Keluarga</option>
+                <option value="Lainnya">Lainnya</option>
+              </select>
+              <div id="katHelp" class="form-text">Pilih kategori yang paling sesuai dengan keluhan Anda.</div>
+            </div>
+
+            <!-- Deskripsi (terenkripsi di DB via HybridEncryptedText) -->
+            <div class="mb-2">
+              <label for="deskripsi" class="form-label">Deskripsi Detail <span class="text-danger">*</span></label>
+              <textarea
+                class="form-control"
+                id="deskripsi"
+                name="deskripsi"
+                rows="6"
+                required
+                minlength="10"
+                maxlength="4000"
+                placeholder="Jelaskan masalah Anda secara detail..."
+                aria-describedby="descHelp descCounter"></textarea>
+              <div id="descHelp" class="form-text">
+                Semakin detail informasi yang Anda berikan, semakin baik konselor dapat membantu Anda.
+                Ceritakan kronologi, perasaan Anda, dan bantuan yang Anda harapkan.
+              </div>
+              <div id="descCounter" class="form-text counter text-end">0 / 4000</div>
+            </div>
+
+            <!-- Informasi Privasi -->
+            <div class="alert alert-info mt-3">
+              <h6 class="mb-2"><i class="fa-solid fa-shield-halved me-1"></i> Jaminan Kerahasiaan</h6>
+              <ul class="mb-0">
+                <li>Keluhan dan respon **dienkripsi** di database sesuai kebijakan aplikasi.</li>
+                <li>Hanya konselor yang ditugaskan yang dapat mengakses detail keluhan Anda.</li>
+                <li>Data tidak dibagikan ke pihak ketiga tanpa persetujuan Anda.</li>
+              </ul>
+            </div>
+
+            <!-- Tombol -->
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
+              <a href="{{ url_for('dashboard_mahasiswa') }}" class="btn btn-secondary">
+                <i class="fa-solid fa-arrow-left"></i> Kembali
+              </a>
+              <button id="btnSubmit" type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-paper-plane"></i> Kirim Keluhan
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Catatan kecil -->
+      <p class="text-muted small mt-2">
+        Tanda (<span class="text-danger">*</span>) berarti wajib diisi.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Inisialisasi setelah DOM siap
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('formKeluhan');
+    const btn = document.getElementById('btnSubmit');
+    const ta = document.getElementById('deskripsi');
+    const counter = document.getElementById('descCounter');
+    const MAX = parseInt(ta.getAttribute('maxlength'), 10) || 4000;
+
+    // Auto-resize textarea
+    const autoresize = () => {
+      ta.style.height = 'auto';
+      ta.style.height = ta.scrollHeight + 'px';
+    };
+    ta.addEventListener('input', autoresize);
+    setTimeout(autoresize, 0);
+
+    // Counter karakter deskripsi
+    const updateCount = () => {
+      const len = ta.value.length;
+      counter.textContent = `${len} / ${MAX}`;
+    };
+    ta.addEventListener('input', updateCount);
+    updateCount();
+
+    // Cegah double submit
+    form.addEventListener('submit', function () {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Mengirim...';
+    });
+  });
+</script>
+{% endblock %}

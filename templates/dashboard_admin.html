@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}Dashboard Admin{% endblock %}
+
+{% block content %}
+<style>
+  .k-card{border:0; border-radius:1rem; box-shadow:0 10px 30px rgba(13,110,253,.08)}
+  .k-header{border-top-left-radius:1rem; border-top-right-radius:1rem}
+  .stat-card:hover{transform:translateY(-2px); box-shadow:0 14px 34px rgba(0,0,0,.10)}
+</style>
+
+<div class="container mt-3">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0"><i class="fa-solid fa-gauge-high me-2"></i> Dashboard Admin</h2>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('index') }}">
+        <i class="fa-solid fa-house"></i> Beranda
+      </a>
+      <button class="btn btn-outline-primary btn-sm" type="button" onclick="location.reload()">
+        <i class="fa-solid fa-rotate-right"></i> Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Welcome -->
+  <div class="card k-card mb-3">
+    <div class="card-body d-flex align-items-center justify-content-between">
+      <div class="me-3">
+        <h4 class="mb-1">Selamat datang, {{ (admin_username or '-')|e }}!</h4>
+        <div class="text-muted">Anda login sebagai <strong>Administrator</strong>.</div>
+      </div>
+      <div class="d-none d-md-block">
+        <i class="fa-solid fa-user-shield fa-2x text-success"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistik Ringkas -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card k-card text-center stat-card">
+        <div class="card-body">
+          <div class="text-muted small mb-1">Total User</div>
+          <div class="display-6">{{ total_users }}</div>
+          <i class="fa-solid fa-users mt-2 text-primary"></i>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card k-card text-center stat-card">
+        <div class="card-body">
+          <div class="text-muted small mb-1">Mahasiswa</div>
+          <div class="h2 mb-0">{{ total_mahasiswa }}</div>
+          <span class="badge bg-info text-dark mt-2">Mahasiswa</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card k-card text-center stat-card">
+        <div class="card-body">
+          <div class="text-muted small mb-1">Konselor</div>
+          <div class="h2 mb-0">{{ total_konselor }}</div>
+          <span class="badge bg-warning text-dark mt-2">Konselor</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card k-card text-center stat-card">
+        <div class="card-body">
+          <div class="text-muted small mb-1">Total Keluhan</div>
+          <div class="h2 mb-0">{{ total_keluhan }}</div>
+          <span class="badge bg-success mt-2">Keluhan</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menu Admin -->
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card k-card h-100">
+        <div class="card-header bg-white k-header">
+          <h5 class="mb-0"><i class="fa-solid fa-users-gear me-1"></i> Manajemen User</h5>
+        </div>
+        <div class="card-body">
+          <p>Kelola data user mahasiswa, konselor, dan admin dalam sistem.</p>
+          <ul class="list-unstyled small mb-3">
+            <li>✓ Lihat semua user</li>
+            <li>✓ Pantau role user</li>
+            <li>✓ (Opsional) Reset password</li>
+          </ul>
+          <a href="{{ url_for('kelola_user') }}" class="btn btn-primary">
+            <i class="fa-solid fa-users-gear"></i> Kelola User
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card k-card h-100">
+        <div class="card-header bg-white k-header">
+          <h5 class="mb-0"><i class="fa-solid fa-clipboard-list me-1"></i> Rekap Keluhan</h5>
+        </div>
+        <div class="card-body">
+          <p>Monitor aktivitas keluhan dan performa konselor secara menyeluruh.</p>
+          <ul class="list-unstyled small mb-3">
+            <li>✓ Rekap keluhan per status & periode</li>
+            <li>✓ Performa konselor</li>
+            <li>✓ Pencarian & penyaringan cepat</li>
+          </ul>
+          <a href="{{ url_for('laporan_sistem') }}" class="btn btn-secondary">
+            <i class="fa-solid fa-chart-simple"></i> Buka Rekap
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Informasi Sistem -->
+  <div class="card k-card mt-4">
+    <div class="card-header bg-white k-header">
+      <h5 class="mb-0"><i class="fa-solid fa-gear me-1"></i> Informasi Sistem</h5>
+    </div>
+    <div class="card-body">
+      <div class="row text-center text-md-start">
+        <div class="col-md-4 mb-3">
+          <h6>Status Sistem</h6>
+          <span class="badge bg-success fs-6">Online</span>
+          <p class="text-muted mb-0 small">Sistem berjalan normal.</p>
+        </div>
+        <div class="col-md-4 mb-3">
+          <h6>Koneksi Database</h6>
+          <span class="badge bg-success fs-6">Connected</span>
+          <p class="text-muted mb-0 small">Koneksi database stabil.</p>
+        </div>
+        <div class="col-md-4 mb-3">
+          <h6>Backup Terakhir</h6>
+          <p class="text-muted mb-2 small">Belum ada backup.</p>
+          <!-- Tombol placeholder (belum ada rute) -->
+          <button class="btn btn-sm btn-outline-primary" type="button" disabled
+                  data-bs-toggle="tooltip" data-bs-title="Fitur belum diaktifkan.">
+            <i class="fa-solid fa-database"></i> Backup Sekarang
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Aktifkan tooltip Bootstrap untuk tombol backup (placeholder)
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.bootstrap) {
+      const triggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+      triggerList.forEach(function (el) { new bootstrap.Tooltip(el) })
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}Riwayat Keluhan (Konselor){% endblock %}
+
+{% block content %}
+<style>
+  .k-card{border:0; border-radius:1rem; box-shadow:0 10px 30px rgba(13,110,253,.08)}
+  .k-header{border-top-left-radius:1rem; border-top-right-radius:1rem}
+  .stat-card:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(0,0,0,.08)}
+  .text-ellipsis{max-width:520px; display:inline-block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+</style>
+
+<div class="container mt-3">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0"><i class="fa-solid fa-clock-rotate-left me-2"></i> Riwayat Keluhan Saya</h2>
+    <div class="text-muted small">Daftar keluhan yang pernah / sedang Anda tangani.</div>
+  </div>
+
+  {% set total = keluhan_list|length if keluhan_list else 0 %}
+  <div class="row g-3 mb-3">
+    <div class="col-md-3">
+      <div class="card k-card stat-card">
+        <div class="card-body">
+          <div class="small text-muted">Total</div>
+          <div class="h4 mb-0">{{ total }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <a class="text-decoration-none" href="{{ url_for('riwayat_keluhan_konselor', status='Menunggu', q=request.args.get('q','')) }}">
+        <div class="card k-card stat-card">
+          <div class="card-body">
+            <div class="small text-muted">Menunggu</div>
+            <div class="h5 mb-0">
+              {{ keluhan_list|selectattr('status','equalto','Menunggu')|list|length if keluhan_list else 0 }}
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-3">
+      <a class="text-decoration-none" href="{{ url_for('riwayat_keluhan_konselor', status='Diproses', q=request.args.get('q','')) }}">
+        <div class="card k-card stat-card">
+          <div class="card-body">
+            <div class="small text-muted">Diproses</div>
+            <div class="h5 mb-0">
+              {{ keluhan_list|selectattr('status','equalto','Diproses')|list|length if keluhan_list else 0 }}
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-3">
+      <a class="text-decoration-none" href="{{ url_for('riwayat_keluhan_konselor', status='Selesai', q=request.args.get('q','')) }}">
+        <div class="card k-card stat-card">
+          <div class="card-body">
+            <div class="small text-muted">Selesai</div>
+            <div class="h5 mb-0">
+              {{ keluhan_list|selectattr('status','equalto','Selesai')|list|length if keluhan_list else 0 }}
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Filter & Search -->
+  <form method="GET" class="row g-2 align-items-end mb-3">
+    <div class="col-sm-4">
+      <label for="status" class="form-label mb-1">Status</label>
+      <select id="status" name="status" class="form-select">
+        <option value="Semua"   {{ 'selected' if status_filter == 'Semua' else '' }}>Semua</option>
+        <option value="Menunggu"{{ 'selected' if status_filter == 'Menunggu' else '' }}>Menunggu</option>
+        <option value="Diproses"{{ 'selected' if status_filter == 'Diproses' else '' }}>Diproses</option>
+        <option value="Selesai" {{ 'selected' if status_filter == 'Selesai' else '' }}>Selesai</option>
+      </select>
+    </div>
+    <div class="col-sm-6">
+      <label for="q" class="form-label mb-1">Cari</label>
+      <input
+        id="q"
+        name="q"
+        type="text"
+        class="form-control"
+        placeholder="Cari judul, deskripsi, atau nama mahasiswa…"
+        value="{{ request.args.get('q','')|e }}"
+        autocomplete="on">
+    </div>
+    <div class="col-sm-2 d-grid gap-2 gap-sm-0">
+      <button class="btn btn-outline-primary" type="submit">
+        <i class="fa-solid fa-filter"></i> Terapkan
+      </button>
+      <a class="btn btn-outline-secondary mt-2 mt-sm-0" href="{{ url_for('riwayat_keluhan_konselor') }}">
+        <i class="fa-solid fa-rotate-left"></i> Reset
+      </a>
+    </div>
+  </form>
+
+  {% if keluhan_list %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th style="min-width:260px">Judul &amp; Deskripsi</th>
+            <th>Mahasiswa</th>
+            <th>Kategori</th>
+            <th>Status</th>
+            <th>Masuk</th>
+            <th>Direspons</th>
+            <th style="min-width:180px">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for k in keluhan_list %}
+            <tr>
+              <td class="fw-semibold">
+                <div class="text-ellipsis" title="{{ k.judul|e }}">{{ k.judul|e }}</div>
+                <div class="small text-muted mt-1">
+                  {{ (k.deskripsi or '')[:120]|e }}{% if k.deskripsi and k.deskripsi|length > 120 %}…{% endif %}
+                </div>
+              </td>
+              <td>{{ (k.mahasiswa.username if k.mahasiswa else '-')|e }}</td>
+              <td><span class="badge bg-secondary">{{ (k.kategori or '-')|e }}</span></td>
+              <td>
+                {% if k.status == 'Menunggu' %}
+                  <span class="badge bg-warning text-dark">Menunggu</span>
+                {% elif k.status == 'Diproses' %}
+                  <span class="badge bg-info text-dark">Diproses</span>
+                {% elif k.status == 'Selesai' %}
+                  <span class="badge bg-success">Selesai</span>
+                {% else %}
+                  <span class="badge bg-light text-dark">{{ k.status|e }}</span>
+                {% endif %}
+              </td>
+              <td>{% if k.tanggal_dibuat %}{{ k.tanggal_dibuat.strftime('%d/%m/%Y %H:%M') }}{% else %}-{% endif %}</td>
+              <td>{% if k.tanggal_direspon %}{{ k.tanggal_direspon.strftime('%d/%m/%Y %H:%M') }}{% else %}-{% endif %}</td>
+              <td>
+                <a class="btn btn-sm btn-outline-info me-1" href="{{ url_for('detail_keluhan', keluhan_id=k.id) }}">
+                  <i class="fa-solid fa-eye"></i> Detail
+                </a>
+                {% if k.status != 'Selesai' %}
+                  <a class="btn btn-sm btn-primary" href="{{ url_for('respon_keluhan', keluhan_id=k.id) }}">
+                    <i class="fa-solid fa-reply"></i> Respon
+                  </a>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-light border d-flex align-items-center" role="alert">
+      <i class="fa-solid fa-inbox me-2"></i>
+      Tidak ada data untuk filter/pencarian ini.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

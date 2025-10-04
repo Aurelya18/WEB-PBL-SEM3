@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Rekap Keluhan{% endblock %}
+
+{% block content %}
+<style>
+  .card-elev{border:0;border-radius:1rem;box-shadow:0 10px 30px rgba(13,110,253,.08)}
+  .stat-card .h4,.stat-card .h5{margin:0}
+</style>
+
+<div class="container mt-4">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">
+      <i class="fa-solid fa-clipboard-list me-2"></i> Rekap Keluhan
+    </h2>
+    <span class="text-muted">
+      Total keluhan: {{ keluhan|length if keluhan else 0 }}
+    </span>
+  </div>
+
+  <!-- Ringkasan -->
+  <div class="row g-3 mb-3">
+    <div class="col-sm-6 col-lg-3">
+      <div class="card card-elev stat-card">
+        <div class="card-body">
+          <div class="small text-muted">Total</div>
+          <div class="h4">{{ keluhan|length if keluhan else 0 }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card card-elev stat-card">
+        <div class="card-body">
+          <div class="small text-muted">Menunggu</div>
+          <div class="h5">
+            {{ keluhan|selectattr('status','equalto','Menunggu')|list|length if keluhan else 0 }}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card card-elev stat-card">
+        <div class="card-body">
+          <div class="small text-muted">Diproses</div>
+          <div class="h5">
+            {{ keluhan|selectattr('status','equalto','Diproses')|list|length if keluhan else 0 }}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card card-elev stat-card">
+        <div class="card-body">
+          <div class="small text-muted">Selesai</div>
+          <div class="h5">
+            {{ keluhan|selectattr('status','equalto','Selesai')|list|length if keluhan else 0 }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter & Pencarian (client-side) -->
+  <div class="row g-2 mb-3">
+    <div class="col-sm-4">
+      <select id="filterStatus" class="form-select" aria-label="Filter status">
+        <option value="">Semua Status</option>
+        <option value="Menunggu">Menunggu</option>
+        <option value="Diproses">Diproses</option>
+        <option value="Selesai">Selesai</option>
+      </select>
+    </div>
+    <div class="col-sm-4">
+      <input id="filterKategori" type="text" class="form-control" placeholder="Filter kategori…" aria-label="Filter kategori">
+    </div>
+    <div class="col-sm-4">
+      <div class="input-group">
+        <span class="input-group-text"><i class="fa-solid fa-search"></i></span>
+        <input id="searchKeluhan" type="text" class="form-control" placeholder="Cari judul/deskripsi/mahasiswa…" aria-label="Pencarian">
+      </div>
+    </div>
+  </div>
+
+  {% if keluhan %}
+    <div class="table-responsive">
+      <table id="tableKeluhan" class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th style="width:70px">ID</th>
+            <th>Judul</th>
+            <th>Mahasiswa</th>
+            <th>Kategori</th>
+            <th>Status</th>
+            <th>Masuk</th>
+            <th>Direspons Oleh</th>
+            <th>Direspons Pada</th>
+            <th style="min-width:120px">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for k in keluhan %}
+          <tr>
+            <td>{{ k.id }}</td>
+            <td class="fw-semibold text-truncate" style="max-width:320px"
+                title="{{ (k.deskripsi or '')|e }}">{{ (k.judul or '-')|e }}</td>
+            <td>{{ (k.mahasiswa.username if k.mahasiswa else '-')|e }}</td>
+            <td>{{ (k.kategori or '-')|e }}</td>
+            <td data-status="{{ k.status }}">
+              {% if k.status == 'Menunggu' %}
+                <span class="badge bg-warning text-dark">Menunggu</span>
+              {% elif k.status == 'Diproses' %}
+                <span class="badge bg-info text-dark">Diproses</span>
+              {% elif k.status == 'Selesai' %}
+                <span class="badge bg-success">Selesai</span>
+              {% else %}
+                <span class="badge bg-light text-dark">{{ (k.status or '-')|e }}</span>
+              {% endif %}
+            </td>
+            <td>{% if k.tanggal_dibuat %}{{ k.tanggal_dibuat.strftime('%d/%m/%Y %H:%M') }}{% else %}-{% endif %}</td>
+            <td>{{ (k.konselor.username if k.konselor else '-')|e }}</td>
+            <td>{% if k.tanggal_direspon %}{{ k.tanggal_direspon.strftime('%d/%m/%Y %H:%M') }}{% else %}-{% endif %}</td>
+            <td>
+              <a class="btn btn-sm btn-outline-info" href="{{ url_for('detail_keluhan', keluhan_id=k.id) }}">
+                <i class="fa-solid fa-eye"></i> Detail
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-light border d-flex align-items-center" role="alert">
+      <i class="fa-solid fa-inbox me-2"></i>
+      Belum ada data keluhan.
+    </div>
+  {% endif %}
+</div>
+
+<script>
+  (function(){
+    const statusSel = document.getElementById('filterStatus');
+    const katInput  = document.getElementById('filterKategori');
+    const qInput    = document.getElementById('searchKeluhan');
+    const table     = document.getElementById('tableKeluhan');
+    if (!table) return;
+
+    function applyFilter(){
+      const status = (statusSel.value || '').toLowerCase();
+      const kat    = (katInput.value || '').toLowerCase();
+      const q      = (qInput.value || '').toLowerCase();
+
+      for (const tr of table.tBodies[0].rows){
+        const judul   = tr.cells[1].innerText.toLowerCase();
+        const mhs     = tr.cells[2].innerText.toLowerCase();
+        const kategori= tr.cells[3].innerText.toLowerCase();
+        const statTxt = tr.cells[4].dataset.status ? tr.cells[4].dataset.status.toLowerCase()
+                                                   : tr.cells[4].innerText.toLowerCase();
+        const deskr   = tr.cells[1].getAttribute('title')?.toLowerCase() || '';
+
+        const matchStatus = !status || statTxt.includes(status);
+        const matchKat    = !kat || kategori.includes(kat);
+        const matchQ      = !q || judul.includes(q) || deskr.includes(q) || mhs.includes(q);
+
+        tr.style.display = (matchStatus && matchKat && matchQ) ? '' : 'none';
+      }
+    }
+
+    statusSel.addEventListener('change', applyFilter);
+    katInput.addEventListener('input', applyFilter);
+    qInput.addEventListener('input', applyFilter);
+  })();
+</script>
+{% endblock %}

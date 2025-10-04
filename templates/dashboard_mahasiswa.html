@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}Dashboard Mahasiswa{% endblock %}
+
+{% block content %}
+<style>
+  .k-card{border:0; border-radius:1rem; box-shadow:0 10px 30px rgba(13,110,253,.08)}
+  .k-header{border-top-left-radius:1rem; border-top-right-radius:1rem}
+  .stat-card:hover{transform:translateY(-2px); box-shadow:0 14px 34px rgba(0,0,0,.10)}
+  .text-ellipsis{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+</style>
+
+<div class="container mt-3">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0"><i class="fa-solid fa-house me-2"></i> Dashboard Mahasiswa</h2>
+    <div>
+      <button class="btn btn-outline-primary btn-sm" type="button" onclick="location.reload()">
+        <i class="fa-solid fa-rotate-right"></i> Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Welcome -->
+  <div class="card k-card mb-3">
+    <div class="card-body d-flex align-items-center justify-content-between">
+      <div class="me-3">
+        <h4 class="mb-1">Selamat datang, {{ (current_user.username or '-')|e }}!</h4>
+        <div class="text-muted">Anda login sebagai <strong>Mahasiswa</strong>.</div>
+      </div>
+      <div class="d-none d-md-block">
+        <i class="fa-solid fa-user-graduate fa-2x text-primary"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notifikasi -->
+  {% if notifications %}
+  <div class="alert alert-warning k-card">
+    <i class="fa-solid fa-bell me-1"></i>
+    Anda memiliki {{ notifications|length }} notifikasi:
+    <ul class="mb-0 mt-2">
+      {% for notif in notifications %}
+        <li class="text-ellipsis" title="{{ notif|e }}">{{ notif|e }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <!-- Statistik -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card k-card stat-card text-center">
+        <div class="card-body">
+          <div class="text-muted small mb-1">Total Keluhan</div>
+          <div class="display-6">{{ total_keluhan }}</div>
+          <i class="fa-solid fa-folder-open mt-2 text-primary"></i>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card k-card stat-card text-center">
+        <div class="card-body">
+          <div class="text-muted small mb-1">Menunggu</div>
+          <div class="h2 mb-0">{{ keluhan_menunggu }}</div>
+          <span class="badge bg-warning text-dark mt-2">Menunggu</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card k-card stat-card text-center">
+        <div class="card-body">
+          <div class="text-muted small mb-1">Diproses</div>
+          <div class="h2 mb-0">{{ keluhan_diproses }}</div>
+          <span class="badge bg-info text-dark mt-2">Diproses</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card k-card stat-card text-center">
+        <div class="card-body">
+          <div class="text-muted small mb-1">Selesai</div>
+          <div class="h2 mb-0">{{ keluhan_selesai }}</div>
+          <span class="badge bg-success mt-2">Selesai</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menu Utama -->
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card k-card h-100">
+        <div class="card-header bg-white k-header">
+          <h5 class="mb-0"><i class="fa-solid fa-plus-circle me-1"></i> Ajukan Keluhan</h5>
+        </div>
+        <div class="card-body">
+          <p>Sampaikan masalah atau keluhan Anda kepada konselor yang tersedia.</p>
+          <ul class="list-unstyled mb-3">
+            <li>✓ Konsultasi akademik</li>
+            <li>✓ Masalah pribadi</li>
+            <li>✓ Konseling karir</li>
+            <li>✓ Masalah sosial</li>
+          </ul>
+          <a href="{{ url_for('ajukan_keluhan') }}" class="btn btn-primary">
+            <i class="fa-solid fa-pen-to-square"></i> Ajukan Keluhan Baru
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card k-card h-100">
+        <div class="card-header bg-white k-header">
+          <h5 class="mb-0"><i class="fa-solid fa-clock-rotate-left me-1"></i> Riwayat Keluhan</h5>
+        </div>
+        <div class="card-body">
+          <p>Pantau status dan perkembangan keluhan yang telah Anda ajukan.</p>
+          <ul class="list-unstyled mb-3">
+            <li>✓ Status keluhan real-time</li>
+            <li>✓ Respon dari konselor</li>
+            <li>✓ Riwayat komunikasi lengkap</li>
+            <li>✓ (Opsional) Unduh laporan</li>
+          </ul>
+          <a href="{{ url_for('riwayat_keluhan') }}" class="btn btn-secondary">
+            <i class="fa-solid fa-list"></i> Lihat Riwayat
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Informasi Tambahan -->
+  <div class="card k-card mt-4">
+    <div class="card-header bg-white k-header">
+      <h5 class="mb-0"><i class="fa-solid fa-circle-info me-1"></i> Informasi Penting</h5>
+    </div>
+    <div class="card-body">
+      <div class="row text-muted">
+        <div class="col-md-4 mb-3 mb-md-0">
+          <h6>Jam Operasional</h6>
+          <p class="mb-0">Senin - Jumat: 08:00 - 16:00<br>Sabtu: 08:00 - 12:00</p>
+        </div>
+        <div class="col-md-4 mb-3 mb-md-0">
+          <h6>Waktu Respon</h6>
+          <p class="mb-0">Keluhan akan direspon maksimal 1×24 jam pada hari kerja.</p>
+        </div>
+        <div class="col-md-4">
+          <h6>Kontak Darurat</h6>
+          <p class="mb-0">
+            Telepon: (021) 123-4567<br>
+            Email: <span class="text-decoration-underline">konseling@universitas.ac.id</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

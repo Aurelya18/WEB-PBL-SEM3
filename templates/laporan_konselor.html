@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% block title %}Laporan Konselor{% endblock %}
+
+{% block content %}
+<style>
+  .card-elev{border:0;border-radius:1rem;box-shadow:0 10px 30px rgba(13,110,253,.10)}
+  .k-chip{font-size:.75rem;padding:.35rem .55rem;border-radius:999px}
+</style>
+
+<div class="container mt-3">
+  <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-3 gap-2">
+    <div>
+      <h1 class="mb-1">Laporan Konselor</h1>
+      <div class="text-muted">Buat ringkasan keluhan yang Anda tangani dan kirim ke manajemen via email.</div>
+    </div>
+    <a href="{{ url_for('dashboard_konselor') }}" class="btn btn-outline-secondary">
+      <i class="fa-solid fa-arrow-left"></i> Kembali
+    </a>
+  </div>
+
+  <!-- filter -->
+  <div class="card card-elev mb-4">
+    <div class="card-header bg-white">
+      <h5 class="mb-0"><i class="fa-solid fa-filter me-1"></i> Filter</h5>
+    </div>
+    <div class="card-body">
+      <form method="GET" action="{{ url_for('laporan_konselor') }}" class="row g-3" autocomplete="off">
+        <div class="col-sm-4">
+          <label class="form-label mb-1">Dari Tanggal</label>
+          <input type="date" class="form-control" name="from" value="{{ date_from }}">
+        </div>
+        <div class="col-sm-4">
+          <label class="form-label mb-1">Sampai Tanggal</label>
+          <input type="date" class="form-control" name="to" value="{{ date_to }}">
+        </div>
+        <div class="col-sm-4">
+          <label class="form-label mb-1">Status</label>
+          <select name="status" class="form-select">
+            <option value="Semua"   {{ 'selected' if status_filter=='Semua' else '' }}>Semua</option>
+            <option value="Menunggu"{{ 'selected' if status_filter=='Menunggu' else '' }}>Menunggu</option>
+            <option value="Diproses"{{ 'selected' if status_filter=='Diproses' else '' }}>Diproses</option>
+            <option value="Selesai" {{ 'selected' if status_filter=='Selesai'  else '' }}>Selesai</option>
+          </select>
+        </div>
+
+        <div class="col-md-8">
+          <label class="form-label mb-1">Cari (opsional)</label>
+          <input type="text" class="form-control" name="q" value="{{ qtext or '' }}" placeholder="Judul / deskripsi / nama mahasiswa">
+        </div>
+
+        <div class="col-md-4 d-grid d-md-flex align-items-end gap-2">
+          <button type="submit" class="btn btn-outline-primary">
+            <i class="fa-solid fa-table"></i> Tampilkan
+          </button>
+
+          <!-- export csv -->
+          <a class="btn btn-outline-secondary"
+             href="{{ url_for('laporan_konselor_export', from=date_from, to=date_to, status=status_filter, q=qtext) }}">
+            <i class="fa-solid fa-file-csv"></i> Export CSV
+          </a>
+
+          <!-- pdf -->
+          <a class="btn btn-outline-dark"
+             href="{{ url_for('laporan_konselor_pdf', from=date_from, to=date_to, status=status_filter, q=qtext) }}">
+            <i class="fa-regular fa-file-pdf"></i> PDF
+          </a>
+
+          <!-- kirim email -->
+          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#emailModal">
+            <i class="fa-solid fa-paper-plane"></i> Kirim Email
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ringkasan -->
+  <div class="row g-3 mb-3">
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="small text-muted">Total</div>
+          <div class="h4 mb-0">{{ rows|length if rows else 0 }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="small text-muted">Menunggu</div>
+          <div class="h5 mb-0">{{ rows|selectattr('status','equalto','Menunggu')|list|length if rows else 0 }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="small text-muted">Diproses</div>
+          <div class="h5 mb-0">{{ rows|selectattr('status','equalto','Diproses')|list|length if rows else 0 }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="small text-muted">Selesai</div>
+          <div class="h5 mb-0">{{ rows|selectattr('status','equalto','Selesai')|list|length if rows else 0 }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- tabel -->
+  <div class="card card-elev">
+    <div class="card-header bg-white">
+      <h5 class="mb-0"><i class="fa-solid fa-list me-1"></i> Hasil</h5>
+    </div>
+    <div class="card-body">
+      {% if rows and rows|length > 0 %}
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Judul</th>
+                <th>Mahasiswa</th>
+                <th>Kategori</th>
+                <th>Status</th>
+                <th>Masuk</th>
+                <th>Direspons</th>
+                <th style="min-width:190px">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for k in rows %}
+              <tr>
+                <td class="text-truncate" style="max-width:260px" title="{{ k.judul|e }}">{{ k.judul|e }}</td>
+                <td>{{ (k.mahasiswa.username if k.mahasiswa else '-')|e }}</td>
+                <td><span class="badge bg-secondary">{{ (k.kategori or '')|e }}</span></td>
+                <td>
+                  {% if k.status == 'Menunggu' %}
+                    <span class="badge bg-warning text-dark">Menunggu</span>
+                  {% elif k.status == 'Diproses' %}
+                    <span class="badge bg-info text-dark">Diproses</span>
+                  {% else %}
+                    <span class="badge bg-success">Selesai</span>
+                  {% endif %}
+                </td>
+                <td>{% if k.tanggal_dibuat %}{{ k.tanggal_dibuat.strftime('%d/%m/%Y %H:%M') }}{% else %}-{% endif %}</td>
+                <td>{% if k.tanggal_direspon %}{{ k.tanggal_direspon.strftime('%d/%m/%Y %H:%M') }}{% else %}-{% endif %}</td>
+                <td>
+                  <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ url_for('detail_keluhan', keluhan_id=k.id) }}" class="btn btn-sm btn-outline-info">
+                      <i class="fa-solid fa-eye"></i> Detail
+                    </a>
+                    {% if k.status == 'Diproses' %}
+                      <a href="{{ url_for('respon_keluhan', keluhan_id=k.id) }}" class="btn btn-sm btn-primary">
+                        <i class="fa-solid fa-reply"></i> Respon
+                      </a>
+                      <form method="POST" action="{{ url_for('selesaikan_keluhan', keluhan_id=k.id) }}" class="d-inline js-confirm-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-success">
+                          <i class="fa-solid fa-check"></i> Tandai Selesai
+                        </button>
+                      </form>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-muted">Belum ada data untuk rentang/status ini.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- modal email -->
+<div class="modal fade" id="emailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('laporan_konselor_email') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="from"   value="{{ date_from }}">
+        <input type="hidden" name="to"     value="{{ date_to }}">
+        <input type="hidden" name="status" value="{{ status_filter }}">
+        <input type="hidden" name="q"      value="{{ qtext or '' }}">
+
+        <div class="modal-header">
+          <h5 class="modal-title">Kirim Laporan via Email</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Kepada (pisahkan dengan koma)</label>
+            <input type="text" name="to" class="form-control" placeholder="dekan@kampus.ac.id, wd3@kampus.ac.id" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Subjek</label>
+            <input type="text" name="subject" class="form-control" value="Laporan Konselor SIGMA">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Catatan / Ringkasan</label>
+            <textarea name="body" class="form-control" rows="5" placeholder="Tuliskan ringkasan konteks laporan…"></textarea>
+          </div>
+          <small class="text-muted">Email berisi ringkasan dan lampiran CSV sesuai filter.</small>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Kirim</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+ # document.querySelectorAll('.js-confirm-form').forEach(f => {
+    f.addEventListener('submit', (e) => {
+      if (!confirm('Tandai keluhan ini sebagai SELESAI?')) e.preventDefault();
+    });
+  });
+</script>
+{% endblock %}

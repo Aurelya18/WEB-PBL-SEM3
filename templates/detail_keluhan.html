@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}Detail Keluhan{% endblock %}
+
+{% block content %}
+<style>
+  .k-card{border:0; border-radius:1rem; box-shadow:0 10px 30px rgba(13,110,253,.08)}
+  .k-chip{font-size:.85rem; padding:.35rem .6rem; border-radius:999px}
+  .chat-container{ background:#f8f9fa; border-radius:.75rem; padding:1rem; }
+  .chat-message{ background:#fff; border-left:4px solid #0d6efd; }
+  .text-justify{ text-align: justify; }
+</style>
+
+<div class="container mt-3">
+  <div class="row">
+    <div class="col-12">
+
+      <!-- Header Keluhan -->
+      <div class="card k-card mb-4">
+        <div class="card-header bg-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <h4 class="mb-0 text-truncate" title="{{ keluhan.judul|e }}">{{ keluhan.judul|e }}</h4>
+            {% if keluhan.status == 'Menunggu' %}
+              <span class="badge bg-warning fs-6">Menunggu</span>
+            {% elif keluhan.status == 'Diproses' %}
+              <span class="badge bg-info fs-6 text-dark">Diproses</span>
+            {% elif keluhan.status == 'Selesai' %}
+              <span class="badge bg-success fs-6">Selesai</span>
+            {% else %}
+              <span class="badge bg-secondary fs-6">{{ keluhan.status|e }}</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <p class="mb-1"><strong>Kategori:</strong> {{ keluhan.kategori|e }}</p>
+              <p class="mb-1"><strong>Tanggal Dibuat:</strong>
+                {% if keluhan.tanggal_dibuat %}{{ keluhan.tanggal_dibuat.strftime('%d %B %Y, %H:%M') }}{% else %}-{% endif %}
+              </p>
+            </div>
+            <div class="col-md-6">
+              {% if keluhan.konselor %}
+                <p class="mb-1"><strong>Konselor:</strong> {{ keluhan.konselor.username|e }}</p>
+                <p class="mb-1"><strong>Tanggal Direspon:</strong>
+                  {% if keluhan.tanggal_direspon %}{{ keluhan.tanggal_direspon.strftime('%d %B %Y, %H:%M') }}{% else %}-{% endif %}
+                </p>
+              {% else %}
+                <p class="mb-1"><strong>Konselor:</strong> <em>Belum ditugaskan</em></p>
+              {% endif %}
+            </div>
+          </div>
+
+          <hr>
+          <h6 class="mb-2">Deskripsi Keluhan:</h6>
+          <p class="text-justify mb-0">{{ keluhan.deskripsi|e }}</p>
+        </div>
+      </div>
+
+      <!-- Chat/Respon Section -->
+      <div class="card k-card">
+        <div class="card-header bg-white">
+          <h5 class="mb-0"><i class="fa-solid fa-comments me-1"></i> Komunikasi dengan Konselor</h5>
+        </div>
+        <div class="card-body">
+          {% if keluhan.respon and keluhan.respon|length > 0 %}
+            <div class="chat-container" style="max-height: 420px; overflow-y: auto;">
+              {% for respon in keluhan.respon %}
+                <div class="chat-message mb-3 p-3 border rounded">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <strong class="text-primary">
+                        <i class="fa-solid fa-user-tie"></i>
+                        {% if respon.konselor %}{{ respon.konselor.username|e }} (Konselor){% else %}Konselor{% endif %}
+                      </strong>
+                      <small class="text-muted ms-2">
+                        {% if respon.tanggal_respon %}{{ respon.tanggal_respon.strftime('%d %B %Y, %H:%M') }}{% endif %}
+                      </small>
+                    </div>
+                  </div>
+                  <div class="mt-2">
+                    {{ respon.pesan|e }}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-center py-4">
+              <i class="fa-regular fa-message fa-2x text-muted mb-3"></i>
+              <p class="text-muted mb-0">
+                {% if keluhan.status == 'Menunggu' %}
+                  Keluhan Anda sedang menunggu untuk ditangani oleh konselor.
+                {% elif keluhan.status == 'Diproses' %}
+                  Konselor sedang memproses keluhan Anda. Respon akan segera diberikan.
+                {% elif keluhan.status == 'Selesai' %}
+                  Keluhan telah selesai ditangani.
+                {% endif %}
+              </p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Form Konselor Kirim Respon + Tandai Selesai -->
+      {% if session.get("role") == "konselor" and keluhan.status != 'Selesai' %}
+      <div class="card k-card mt-4">
+        <div class="card-header bg-white">
+          <h5 class="mb-0"><i class="fa-solid fa-reply me-1"></i> Kirim Respon</h5>
+        </div>
+        <div class="card-body">
+          <form method="POST" action="{{ url_for('detail_keluhan', keluhan_id=keluhan.id) }}">
+            <!-- CSRF token WAJIB untuk POST -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="mb-3">
+              <textarea name="pesan" class="form-control" rows="3" placeholder="Tulis respon Anda..." required></textarea>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center">
+              <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-paper-plane"></i> Kirim Respon
+              </button>
+
+              {% if keluhan.status == 'Diproses' %}
+              <!-- Tandai Selesai (POST + CSRF + konfirmasi) -->
+              <form method="POST" action="{{ url_for('selesaikan_keluhan', keluhan_id=keluhan.id) }}" class="d-inline js-confirm-finish">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-success">
+                  <i class="fa-solid fa-check-circle"></i> Tandai Selesai
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Action Buttons -->
+      <div class="d-flex justify-content-center gap-3 mt-4">
+        {% if session.get("role") == "mahasiswa" %}
+          <a href="{{ url_for('riwayat_keluhan') }}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Kembali ke Riwayat
+          </a>
+        {% else %}
+          <a href="{{ url_for('dashboard_konselor') }}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Kembali ke Dashboard Konselor
+          </a>
+        {% endif %}
+
+        {% if keluhan.status != 'Selesai' %}
+          <button class="btn btn-outline-info" type="button" onclick="location.reload()">
+            <i class="fa-solid fa-rotate-right"></i> Refresh Status
+          </button>
+        {% else %}
+          <button class="btn btn-success" disabled>
+            <i class="fa-solid fa-check-circle"></i> Keluhan Selesai
+          </button>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // Konfirmasi sebelum menandai selesai
+  document.querySelectorAll('.js-confirm-finish').forEach(f => {
+    f.addEventListener('submit', (e) => {
+      if (!confirm('Tandai keluhan ini sebagai SELESAI?')) {
+        e.preventDefault();
+      }
+    });
+  });
+</script>
+{% endblock %}

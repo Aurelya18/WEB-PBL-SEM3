@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Beranda - Sistem Konseling{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Hero Section -->
+    <div class="jumbotron bg-primary text-white rounded p-5 mb-4">
+        <div class="text-center">
+            <h1 class="display-4">Sistem Konseling Online</h1>
+            <p class="lead">Platform konsultasi dan konseling untuk mahasiswa dengan konselor profesional</p>
+            {% if not current_user.is_authenticated %}
+                <a class="btn btn-light btn-lg me-2" href="{{ url_for('register') }}">
+                    <i class="fas fa-user-plus"></i> Daftar
+                </a>
+                <a class="btn btn-outline-light btn-lg" href="{{ url_for('login') }}">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </a>
+            {% else %}
+                <a class="btn btn-light btn-lg" href="{{ 
+                    url_for('dashboard_mahasiswa') if current_user.role == 'mahasiswa' 
+                    else url_for('dashboard_konselor') if current_user.role == 'konselor'
+                    else url_for('dashboard_admin') 
+                }}">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Features -->
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-user-friends fa-3x text-primary mb-3"></i>
+                    <h5>Konseling Akademik</h5>
+                    <p class="text-muted">Dapatkan bantuan untuk masalah akademik, kesulitan belajar, dan perencanaan karir.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-heart fa-3x text-danger mb-3"></i>
+                    <h5>Konseling Pribadi</h5>
+                    <p class="text-muted">Konsultasi masalah pribadi, emosional, dan sosial dengan konselor berpengalaman.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-shield-alt fa-3x text-success mb-3"></i>
+                    <h5>Kerahasiaan Terjamin</h5>
+                    <p class="text-muted">Semua informasi konseling dijaga kerahasiaannya sesuai kode etik konseling.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- How it Works -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h2 class="text-center mb-4">Cara Menggunakan</h2>
+        </div>
+        
+        <div class="col-md-3 text-center mb-3">
+            <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" 
+                 style="width: 60px; height: 60px;">
+                <strong>1</strong>
+            </div>
+            <h6 class="mt-3">Daftar Akun</h6>
+            <p class="text-muted">Buat akun sebagai mahasiswa</p>
+        </div>
+        
+        <div class="col-md-3 text-center mb-3">
+            <div class="bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center" 
+                 style="width: 60px; height: 60px;">
+                <strong>2</strong>
+            </div>
+            <h6 class="mt-3">Ajukan Keluhan</h6>
+            <p class="text-muted">Sampaikan masalah Anda</p>
+        </div>
+        
+        <div class="col-md-3 text-center mb-3">
+            <div class="bg-warning text-white rounded-circle d-inline-flex align-items-center justify-content-center" 
+                 style="width: 60px; height: 60px;">
+                <strong>3</strong>
+            </div>
+            <h6 class="mt-3">Konsultasi</h6>
+            <p class="text-muted">Diskusi dengan konselor</p>
+        </div>
+        
+        <div class="col-md-3 text-center mb-3">
+            <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center" 
+                 style="width: 60px; height: 60px;">
+                <strong>4</strong>
+            </div>
+            <h6 class="mt-3">Solusi</h6>
+            <p class="text-muted">Dapatkan solusi terbaik</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

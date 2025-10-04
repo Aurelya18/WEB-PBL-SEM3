@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Kelola User{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0"><i class="fas fa-users-cog"></i> Kelola User</h2>
+    <span class="text-muted">Total: {{ users|length if users else 0 }}</span>
+  </div>
+
+  <!-- Pencarian Cepat -->
+  <div class="input-group mb-3">
+    <span class="input-group-text"><i class="fas fa-search"></i></span>
+    <input id="searchUser" type="text" class="form-control" placeholder="Cari username atau role…">
+  </div>
+
+  {% if users %}
+    <div class="table-responsive">
+      <table id="tableUser" class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th style="width:80px">ID</th>
+            <th>Username</th>
+            <th style="width:160px">Role</th>
+            <th style="width:160px" title="Jumlah keluhan yang diajukan (sebagai mahasiswa)">Keluhan Diajukan</th>
+            <th style="width:160px" title="Jumlah keluhan yang ditangani (sebagai konselor)">Keluhan Ditangani</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+            <tr>
+              <td>{{ u.id }}</td>
+              <td class="fw-semibold">{{ u.username }}</td>
+              <td>
+                {% if u.role == 'admin' %}
+                  <span class="badge bg-dark">admin</span>
+                {% elif u.role == 'konselor' %}
+                  <span class="badge bg-primary">konselor</span>
+                {% elif u.role == 'mahasiswa' %}
+                  <span class="badge bg-secondary">mahasiswa</span>
+                {% else %}
+                  <span class="badge bg-light text-dark">{{ u.role }}</span>
+                {% endif %}
+              </td>
+              <td>{{ u.keluhan|length if u.keluhan else 0 }}</td>
+              <td>{{ u.tangani|length if u.tangani else 0 }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-light border d-flex align-items-center" role="alert">
+      <i class="fas fa-inbox me-2"></i>
+      Belum ada user.
+    </div>
+  {% endif %}
+</div>
+
+<script>
+  // filter baris tabel secara client-side
+  (function(){
+    const input = document.getElementById('searchUser');
+    const table = document.getElementById('tableUser');
+    if (!input || !table) return;
+    input.addEventListener('input', function(){
+      const q = this.value.toLowerCase();
+      for (const tr of table.tBodies[0].rows) {
+        const username = tr.cells[1].innerText.toLowerCase();
+        const role = tr.cells[2].innerText.toLowerCase();
+        tr.style.display = (username.includes(q) || role.includes(q)) ? '' : 'none';
+      }
+    });
+  })();
+</script>
+{% endblock %}

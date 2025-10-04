@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Kirim Laporan via Email{% endblock %}
+
+{% block content %}
+{% set p_from = start_date or date_from %}
+{% set p_to   = end_date or date_to %}
+{% set p_q    = request.args.get('q','') %}
+{% set p_status = status_filter or request.args.get('status','Semua') %}
+
+<style>
+  .card-elev{border:0;border-radius:1rem;box-shadow:0 10px 30px rgba(13,110,253,.10)}
+</style>
+
+<div class="container mt-3">
+  <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-3 gap-2">
+    <div>
+      <h1 class="mb-1">Kirim Laporan via Email</h1>
+      <div class="text-muted">Email berisi ringkasan & lampiran CSV sesuai filter.</div>
+    </div>
+    <a href="{{ url_for('laporan_konselor', **{'start_date': p_from, 'end_date': p_to, 'status': p_status, 'q': p_q}) }}" class="btn btn-outline-secondary">
+      <i class="fa-solid fa-arrow-left"></i> Kembali
+    </a>
+  </div>
+
+  <div class="card card-elev">
+    <div class="card-header bg-white">
+      <h5 class="mb-0"><i class="fa-solid fa-paper-plane me-1"></i> Form Email</h5>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('laporan_konselor_email') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <!-- filter ikut terkirim -->
+        <input type="hidden" name="from"   value="{{ p_from }}">
+        <input type="hidden" name="to"     value="{{ p_to }}">
+        <input type="hidden" name="status" value="{{ p_status }}">
+        <input type="hidden" name="q"      value="{{ p_q }}">
+
+        <div class="mb-3">
+          <label class="form-label">Kepada (pisahkan dengan koma)</label>
+          <input type="text" name="to" class="form-control" placeholder="dekan@kampus.ac.id, wd3@kampus.ac.id" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Subjek</label>
+          <input type="text" name="subject" class="form-control" value="Laporan Konselor SIGMA">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Catatan / Ringkasan</label>
+          <textarea name="body" class="form-control" rows="6" placeholder="Tuliskan ringkasan laporan…"></textarea>
+        </div>
+
+        <div class="d-flex gap-2">
+          <a class="btn btn-outline-secondary" href="{{ url_for('laporan_konselor', **{'start_date': p_from, 'end_date': p_to, 'status': p_status, 'q': p_q}) }}">
+            Batal
+          </a>
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-paper-plane"></i> Kirim
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

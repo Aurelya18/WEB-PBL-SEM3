@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="container py-5 auth-shell">
+  <div class="row align-items-center justify-content-center">
+    <!-- info -->
+    <div class="col-lg-6 mb-4 mb-lg-0">
+      <div class="k-card p-4 h-100">
+        <div class="feature-icon mb-2"><i class="fa-solid fa-right-to-bracket"></i></div>
+        <h2 class="mb-2">Masuk ke SIGMA</h2>
+        <p class="text-muted">
+          Gunakan <strong>ID pengguna</strong> sesuai peran Anda:
+        </p>
+        <ul class="text-muted small mb-0">
+          <li>Mahasiswa: <code>nama.nim</code> (contoh: <code>aurel.4335908</code>)</li>
+          <li>Konselor: <code>KNS-XXXX</code></li>
+          <li>Admin: <code>ADM-XXXX</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- form -->
+    <div class="col-lg-5">
+      <div class="auth-card p-4 shadow-sm">
+        <div class="d-flex align-items-center mb-3">
+          <div class="feature-icon me-2"><i class="fa-solid fa-lock"></i></div>
+          <h4 class="mb-0">Login</h4>
+        </div>
+
+        <form method="POST" action="{{ url_for('login') }}" autocomplete="on" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="mb-3">
+            <label for="username" class="form-label">ID Pengguna</label>
+            <input
+              type="text"
+              class="form-control"
+              id="username"
+              name="username"
+              required
+              minlength="3"
+              maxlength="150"
+              pattern="(?:[a-z][a-z0-9_.-]{1,30}\.[0-9]{5,12}|KNS-[A-Za-z0-9]{4,16}|ADM-[A-Za-z0-9]{4,16})"
+              title="Mahasiswa: nama.nim (aurel.4335908) • Konselor: KNS-XXXX • Admin: ADM-XXXX"
+              autocapitalize="none"
+              spellcheck="false"
+              autocomplete="username"
+              placeholder="Contoh: aurel.4335908 / KNS-0012 / ADM-0001"
+              autofocus>
+            <div class="d-flex justify-content-between small mt-1">
+              <div class="text-muted">Hindari spasi. Case-insensitive.</div>
+              <div id="roleHint" class="fw-semibold"></div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <div class="input-group">
+              <input
+                type="password"
+                class="form-control"
+                id="password"
+                name="password"
+                required
+                autocomplete="current-password"
+                placeholder="Masukkan password">
+              <button class="btn btn-outline-secondary" type="button" id="togglePwd" aria-label="Tampilkan/Sembunyikan password" tabindex="-1">
+                <i class="fa-regular fa-eye" id="eyeIcon"></i>
+              </button>
+            </div>
+            <div id="capsWarn" class="form-text text-danger d-none">Caps Lock aktif.</div>
+          </div>
+
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary btn-cta">Login</button>
+          </div>
+        </form>
+
+        <hr>
+        <div class="text-center">
+          <p class="mb-0">
+            Belum punya akun?
+            <a href="{{ url_for('register') }}" class="fw-semibold">Daftar di sini</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function(){
+    const user = document.getElementById('username');
+    const pwd  = document.getElementById('password');
+    const toggle = document.getElementById('togglePwd');
+    const eyeIcon = document.getElementById('eyeIcon');
+    const capsWarn = document.getElementById('capsWarn');
+    const roleHint = document.getElementById('roleHint');
+
+    const reMahasiswa = /^[a-z][a-z0-9_.-]{1,30}\.[0-9]{5,12}$/i;
+    const reKonselor  = /^KNS-[A-Za-z0-9]{4,16}$/i;
+    const reAdmin     = /^ADM-[A-Za-z0-9]{4,16}$/i;
+
+    function hintRole() {
+      const v = (user.value || '').trim();
+      let txt = '', cls = 'text-muted';
+      if (!v) { roleHint.textContent = ''; return; }
+      if (reMahasiswa.test(v)) { txt = 'Mahasiswa'; cls = 'text-success'; }
+      else if (reKonselor.test(v)) { txt = 'Konselor'; cls = 'text-info'; }
+      else if (reAdmin.test(v)) { txt = 'Admin'; cls = 'text-primary'; }
+      else { txt = 'Format belum dikenali'; cls = 'text-danger'; }
+      roleHint.className = 'small fw-semibold ' + cls;
+      roleHint.textContent = txt;
+    }
+
+    user.addEventListener('input', () => {
+      user.value = user.value.replace(/\s+/g,''); // cegah spasi
+      hintRole();
+    });
+    user.addEventListener('blur', hintRole);
+    hintRole();
+
+    toggle.addEventListener('click', () => {
+      const isHidden = pwd.type === 'password';
+      pwd.type = isHidden ? 'text' : 'password';
+      eyeIcon.classList.toggle('fa-eye');
+      eyeIcon.classList.toggle('fa-eye-slash');
+      pwd.focus();
+    });
+
+    function updateCaps(e){
+      try {
+        const caps = e.getModifierState && e.getModifierState('CapsLock');
+        caps ? capsWarn.classList.remove('d-none') : capsWarn.classList.add('d-none');
+      } catch(_) {}
+    }
+    ['keydown','keyup','focus'].forEach(evt => pwd.addEventListener(evt, updateCaps));
+    pwd.addEventListener('blur', () => capsWarn.classList.add('d-none'));
+
+    user.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); pwd.focus(); }
+    });
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% block title %}Registrasi{% endblock %}
+
+{% block content %}
+<div class="container py-5 auth-shell">
+  <div class="row align-items-center justify-content-center">
+    <!-- info -->
+    <div class="col-lg-6 mb-4 mb-lg-0">
+      <div class="k-card p-4 h-100">
+        <div class="feature-icon mb-2"><i class="fa-solid fa-user-graduate"></i></div>
+        <h2 class="mb-2">Buat Akun SIGMA (Mahasiswa)</h2>
+        <p class="text-muted">
+          Akun mahasiswa menggunakan format <strong>nama.nim</strong> (contoh: <code>aurel.4335908</code>).
+        </p>
+        <ul class="text-muted small mb-0">
+          <li>✓ Password <strong>Argon2id</strong></li>
+          <li>✓ Data sensitif terenkripsi</li>
+          <li>✓ CSRF protection</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- form -->
+    <div class="col-lg-5">
+      <div class="auth-card p-4 shadow-sm">
+        <div class="d-flex align-items-center mb-3">
+          <div class="feature-icon me-2"><i class="fa-solid fa-id-card-clip"></i></div>
+          <h4 class="mb-0">Registrasi Mahasiswa</h4>
+        </div>
+
+        <form method="POST" action="{{ url_for('register') }}" autocomplete="on" novalidate>
+          <!-- csrf -->
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <!-- nama -->
+          <div class="mb-3">
+            <label for="full_name" class="form-label">Nama Lengkap</label>
+            <input
+              type="text"
+              class="form-control"
+              id="full_name"
+              name="full_name"
+              required
+              maxlength="120"
+              placeholder="Nama sesuai identitas">
+          </div>
+
+          <!-- nim -->
+          <div class="mb-3">
+            <label for="nim" class="form-label">NIM</label>
+            <input
+              type="text"
+              class="form-control"
+              id="nim"
+              name="nim"
+              required
+              inputmode="numeric"
+              pattern="^\d{5,12}$"
+              maxlength="16"
+              placeholder="Hanya angka (5–12 digit)">
+            <div class="form-text">Gunakan NIM resmi kampus.</div>
+          </div>
+
+          <!-- username auto (dibuat dari nama depan + NIM) -->
+          <div class="mb-3">
+            <label for="username_display" class="form-label">Username (otomatis)</label>
+            <input
+              type="text"
+              class="form-control"
+              id="username_display"
+              value=""
+              readonly
+              aria-describedby="unameHelp">
+            <input type="hidden" id="username" name="username" value="">
+            <div id="unameHelp" class="form-text">
+              Dibentuk dari <em>nama depan</em> + titik + NIM. Contoh: <code>aurel.4335908</code>.
+            </div>
+            <div id="unameWarn" class="small mt-1"></div>
+          </div>
+
+          <!-- password -->
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <div class="input-group">
+              <input
+                type="password"
+                class="form-control"
+                id="password"
+                name="password"
+                required
+                minlength="12"
+                autocomplete="new-password"
+                placeholder="Buat password">
+              <button class="btn btn-outline-secondary" type="button" id="togglePwd" aria-label="Show/Hide">
+                <i class="fa-regular fa-eye" id="eyeIcon1"></i>
+              </button>
+            </div>
+            <div class="form-text">Minimal 12 karakter.</div>
+            <div class="progress mt-2" role="progressbar" aria-label="Kekuatan password">
+              <div id="pwdMeter" class="progress-bar" style="width:0%"></div>
+            </div>
+            <div id="capsWarn" class="form-text text-danger d-none">Caps Lock aktif.</div>
+          </div>
+
+          <!-- konfirmasi -->
+          <div class="mb-3">
+            <label for="confirm" class="form-label">Konfirmasi Password</label>
+            <div class="input-group">
+              <input
+                type="password"
+                class="form-control"
+                id="confirm"
+                name="confirm"
+                required
+                autocomplete="new-password"
+                placeholder="Ulangi password">
+              <button class="btn btn-outline-secondary" type="button" id="toggleConfirm" aria-label="Show/Hide">
+                <i class="fa-regular fa-eye" id="eyeIcon2"></i>
+              </button>
+            </div>
+            <div id="matchHint" class="form-text"></div>
+          </div>
+
+          <!-- submit -->
+          <div class="d-grid">
+            <button id="submitBtn" type="submit" class="btn btn-primary btn-cta" disabled>Daftar</button>
+          </div>
+        </form>
+
+        <hr>
+        <div class="text-center">
+          <p class="mb-0">
+            Sudah punya akun?
+            <a href="{{ url_for('login') }}" class="fw-semibold">Login di sini</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function(){
+    const fullName = document.getElementById('full_name');
+    const nim = document.getElementById('nim');
+    const unameDisp = document.getElementById('username_display');
+    const unameHidden = document.getElementById('username');
+    const unameWarn = document.getElementById('unameWarn');
+    const pwd = document.getElementById('password');
+    const conf = document.getElementById('confirm');
+    const bar = document.getElementById('pwdMeter');
+    const matchHint = document.getElementById('matchHint');
+    const submitBtn = document.getElementById('submitBtn');
+    const togglePwd = document.getElementById('togglePwd');
+    const toggleConfirm = document.getElementById('toggleConfirm');
+    const eye1 = document.getElementById('eyeIcon1');
+    theEye2 = document.getElementById('eyeIcon2');
+    const capsWarn = document.getElementById('capsWarn');
+
+    // util
+    const stripDiac = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const firstWord = (s) => (s || '').trim().split(/\s+/)[0] || '';
+    const slug = (s) => stripDiac(s).toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,32);
+
+    // build username
+    function buildUsername(){
+      const f = slug(firstWord(fullName.value));
+      const n = (nim.value || '').replace(/\D/g,'');
+      const u = (f && n) ? `${f}.${n}` : '';
+      unameDisp.value = u;
+      unameHidden.value = u;
+      const ok = /^[a-z][a-z0-9_.-]{1,30}\.[0-9]{5,12}$/.test(u);
+      unameWarn.className = 'small mt-1 ' + (ok ? 'text-success' : 'text-danger');
+      unameWarn.textContent = u ? (ok ? 'Format username valid.' : 'Format belum valid.') : '';
+      return ok;
+    }
+
+    // pwd meter
+    function strength(p) {
+      if (!p) return 0;
+      let s = 0;
+      if (p.length >= 12) s += 35;
+      if (p.length >= 16) s += 15;
+      if (/[a-z]/.test(p)) s += 10;
+      if (/[A-Z]/.test(p)) s += 10;
+      if (/\d/.test(p))    s += 10;
+      if (/[^A-Za-z0-9]/.test(p)) s += 10;
+      if (!/(.)\1{3,}/.test(p)) s += 10;
+      return Math.min(100, s);
+    }
+    function updateMeter() {
+      const v = strength(pwd.value);
+      bar.style.width = v + '%';
+      bar.classList.remove('bg-danger','bg-warning','bg-success');
+      if (v < 40) bar.classList.add('bg-danger');
+      else if (v < 70) bar.classList.add('bg-warning');
+      else bar.classList.add('bg-success');
+    }
+    function updateMatch() {
+      if (!conf.value) { matchHint.textContent = ''; checkReady(); return; }
+      const same = pwd.value === conf.value;
+      matchHint.textContent = same ? '✓ Password cocok' : '✗ Password tidak cocok';
+      matchHint.classList.toggle('text-success', same);
+      matchHint.classList.toggle('text-danger', !same);
+      checkReady();
+    }
+
+    // ready state
+    function checkReady(){
+      const okUser = buildUsername();
+      const okNim  = /^\d{5,12}$/.test(nim.value || '');
+      const okPwd  = (pwd.value || '').length >= 12;
+      const okEq   = pwd.value === conf.value && conf.value.length > 0;
+      submitBtn.disabled = !(okUser && okNim && okPwd && okEq);
+    }
+
+    // toggle
+    function toggleVisibility(input, icon) {
+      const isHidden = input.type === 'password';
+      input.type = isHidden ? 'text' : 'password';
+      icon.classList.toggle('fa-eye');
+      icon.classList.toggle('fa-eye-slash');
+      input.focus();
+    }
+
+    // caps lock
+    function updateCaps(e){
+      try {
+        const caps = e.getModifierState && e.getModifierState('CapsLock');
+        caps ? capsWarn.classList.remove('d-none') : capsWarn.classList.add('d-none');
+      } catch(_) {}
+    }
+
+    // bind
+    ['input','change','blur'].forEach(evt => {
+      fullName.addEventListener(evt, checkReady);
+      nim.addEventListener(evt, checkReady);
+    });
+    pwd.addEventListener('input', () => { updateMeter(); updateMatch(); });
+    conf.addEventListener('input', updateMatch);
+    ['keydown','keyup','focus'].forEach(evt => pwd.addEventListener(evt, updateCaps));
+    pwd.addEventListener('blur', () => capsWarn.classList.add('d-none'));
+    togglePwd.addEventListener('click', () => toggleVisibility(pwd, eye1));
+    toggleConfirm.addEventListener('click', () => toggleVisibility(conf, theEye2));
+
+    // init
+    buildUsername(); updateMeter(); updateMatch(); checkReady();
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}SIGMA - Sistem Informasi Guardian Mahasiswa Aduan{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <!-- HERO -->
+  <section class="hero rounded-4">
+    <div class="hero-inner">
+      <div class="row align-items-center">
+        <div class="col-lg-7">
+          <span class="hero-badge fade-in">
+            <i class="fa-solid fa-shield-heart"></i> SIGMA • Kampus Peduli
+          </span>
+          <h1 class="hero-title fade-in-delay">
+            Sampaikan Aduan. Direspon Cepat. <br/>Lingkungan Kampus Lebih Nyaman.
+          </h1>
+          <p class="hero-sub">
+            SIGMA memudahkan mahasiswa menyampaikan keluhan, saran, atau masukan, yang ditangani secara profesional,
+            transparan, dan rahasia oleh konselor kampus.
+          </p>
+          <div class="mt-3">
+            <a href="{{ url_for('login') }}" class="btn btn-light btn-lg me-2 btn-cta">
+              <i class="fa-solid fa-right-to-bracket"></i> Login
+            </a>
+            <a href="{{ url_for('register') }}" class="btn btn-warning btn-lg btn-cta">
+              <i class="fa-solid fa-user-plus"></i> Register
+            </a>
+          </div>
+          <div class="text-muted small mt-3">
+            Data dilindungi: Aman terpercaya untuk password & enkripsi keluhan.
+          </div>
+        </div>
+
+        <div class="col-lg-5 mt-4 mt-lg-0">
+          <div class="glass p-4 h-100">
+            <div class="d-flex align-items-center mb-3">
+              <div class="feature-icon me-3"><i class="fa-solid fa-lock"></i></div>
+              <div>
+                <div class="fw-semibold">Keamanan Prioritas</div>
+                <div class="text-muted small">Kerahasiaan aduan terjaga end-to-end.</div>
+              </div>
+            </div>
+
+            <div class="d-flex align-items-center mb-3">
+              <div class="feature-icon me-3"><i class="fa-solid fa-comments"></i></div>
+              <div>
+                <div class="fw-semibold">Respon dari Konselor</div>
+                <div class="text-muted small">Ditangani oleh konselor kampus secara profesional.</div>
+              </div>
+            </div>
+
+            <div class="d-flex align-items-center">
+              <div class="feature-icon me-3"><i class="fa-solid fa-chart-line"></i></div>
+              <div>
+                <div class="fw-semibold">Progres Transparan</div>
+                <div class="text-muted small">Pantau status: Menunggu, Diproses, Selesai.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /row -->
+    </div>
+  </section>
+
+  <!-- FITUR UTAMA -->
+  <section class="mt-5">
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="k-card p-4 hover-lift h-100">
+          <div class="feature-icon mb-3"><i class="fa-solid fa-bullhorn"></i></div>
+          <h5 class="mb-2">Aduan Mudah</h5>
+          <p class="text-muted mb-0">Tulis keluhan kapan saja lewat portal mahasiswa—cepat dan praktis.</p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="k-card p-4 hover-lift h-100">
+          <div class="feature-icon mb-3"><i class="fa-solid fa-user-nurse"></i></div>
+          <h5 class="mb-2">Konseling Profesional</h5>
+          <p class="text-muted mb-0">Ditangani konselor berpengalaman dengan empati dan solusi nyata.</p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="k-card p-4 hover-lift h-100">
+          <div class="feature-icon mb-3"><i class="fa-solid fa-shield"></i></div>
+          <h5 class="mb-2">Privasi & Transparansi</h5>
+          <p class="text-muted mb-0">Enkripsi data & pelacakan status yang jelas untuk ketenangan Anda.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA RINGKAS -->
+  <section class="mt-5">
+    <div class="k-card p-4">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <h5 class="mb-1">Baru pertama kali?</h5>
+          <p class="text-muted mb-0">Buat akun dan ajukan keluhan pertama Anda—kami siap membantu.</p>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+          <a href="{{ url_for('register') }}" class="btn btn-primary btn-cta">
+            <i class="fa-solid fa-user-plus"></i> Daftar Sekarang
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

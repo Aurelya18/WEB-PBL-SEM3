@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}SIGMA{% endblock %}</title>
+
+  <!-- Security meta (bukan pengganti konfigurasi HTTPS di server) -->
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="color-scheme" content="light">
+
+  <!-- CSS libs -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Icons -->
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+
+  <!-- Chart.js (opsional) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  {% block extra_head %}{% endblock %}
+
+  <style>
+    :root{
+      --primary:#0d6efd;
+      --primary-2:#4dabf7;
+      --bg-soft:#f8f9fa;
+
+      /* Sidebar */
+      --sidebar-bg: var(--primary);
+      --sidebar-bg-dark: #0b5ed7;
+      --sidebar-text: #ffffff;
+      --sidebar-hover: rgba(255,255,255,.14);
+      --sidebar-active: rgba(255,255,255,.22);
+
+      /* Elevation */
+      --shadow-1: 0 10px 30px rgba(13,110,253,.08);
+      --shadow-2: 0 24px 60px rgba(13,110,253,.12);
+      --shadow-soft: 0 18px 50px rgba(0,0,0,.06);
+    }
+
+    /* Global */
+    body { background: var(--bg-soft); }
+    .navbar-brand { letter-spacing:.5px; }
+    .app-layout{ min-height: 100vh; }
+
+    /* Sidebar */
+    .sidebar{
+      background: var(--sidebar-bg);
+      color: var(--sidebar-text);
+      padding: 18px 14px;
+      position: sticky;
+      top: 0;
+      height: calc(100vh - 56px);
+      overflow-y: auto;
+    }
+    .sidebar .profile-card{
+      background: var(--sidebar-bg-dark);
+      border: 1px solid rgba(255,255,255,.12);
+      color: var(--sidebar-text);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    }
+    .avatar-circle{
+      width: 40px; height: 40px; border-radius: 50%;
+      background: rgba(255,255,255,.2);
+      display:flex; align-items:center; justify-content:center;
+      font-weight: 700; color: #fff;
+    }
+    .role-badge{
+      background: rgba(255,255,255,.18);
+      border:1px solid rgba(255,255,255,.25);
+      color:#fff;
+      padding:.15rem .5rem; border-radius: 999px; font-size:.75rem;
+    }
+    .sidebar h6{
+      font-size:.78rem; text-transform: uppercase; letter-spacing:.08em;
+      opacity:.9; margin: 18px 8px 8px;
+    }
+    .nav-vertical .nav-link{
+      color: var(--sidebar-text);
+      display:flex; align-items:center; gap:10px;
+      padding:10px 12px; border-radius:10px;
+      transition: background .15s ease;
+      font-weight:500;
+    }
+    .nav-vertical .nav-link i{ width: 18px; text-align:center; }
+    .nav-vertical .nav-link:hover{ background: var(--sidebar-hover); }
+    .nav-vertical .nav-link.active{
+      background: var(--sidebar-active);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.2);
+    }
+
+    /* Main */
+    main{ padding: 20px; }
+
+    /* Footer */
+    footer{ background: var(--primary); color:#fff; text-align:center; padding:12px 0; }
+
+    /* ===== Shared UI (index/login/register) ===== */
+    .hero {
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(1200px 500px at 10% -10%, rgba(13,110,253,.12), transparent 60%),
+        radial-gradient(900px 400px at 100% 0%, rgba(32,201,151,.12), transparent 60%),
+        linear-gradient(180deg, #ffffff, #f8fbff);
+    }
+    .hero-inner{ padding: 48px 0 }
+    .hero-badge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:.35rem .7rem; border-radius:999px;
+      background: rgba(13,110,253,.08); color:var(--primary); font-weight:600;
+      border:1px solid rgba(13,110,253,.15);
+    }
+    .hero-title{
+      font-weight: 800; line-height:1.15;
+      font-size: clamp(28px, 3.8vw, 46px);
+    }
+    .hero-sub{ color:#495057; font-size: clamp(14px, 1.6vw, 18px) }
+
+    .k-card{ border:0; border-radius:1rem; box-shadow: var(--shadow-1); background:#fff }
+    .feature-icon{
+      width:44px; height:44px; display:grid; place-items:center;
+      border-radius:10px; background:#eef5ff; color:var(--primary);
+    }
+
+    .auth-hero {
+      position: relative;
+      min-height: calc(100vh - 56px - 48px);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background:
+        radial-gradient(1200px 400px at -10% -20%, rgba(13,110,253,.12), transparent 60%),
+        radial-gradient(900px 300px at 120% 0%, rgba(32,201,151,.12), transparent 60%);
+    }
+    .auth-shell{
+      width: 100%;
+      max-width: 1024px;
+      border-radius: 20px;
+      box-shadow: var(--shadow-2);
+      overflow: hidden;
+      background: linear-gradient(180deg, #ffffff, #f8fbff);
+    }
+    .auth-left{
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
+      color: #fff;
+      padding: 36px;
+    }
+    .auth-left .brand{
+      display: flex; align-items:center; gap:10px; font-weight:800; letter-spacing:.4px;
+    }
+    .auth-left .hero-title{
+      font-size: clamp(22px, 3vw, 28px);
+      line-height: 1.2;
+      margin: 18px 0 6px;
+      font-weight: 800;
+    }
+    .auth-left .hero-sub{ opacity:.92; margin-bottom:18px }
+    .auth-bullets li{ margin:.4rem 0 }
+    .auth-bullets i{ width:18px; text-align:center }
+
+    .auth-right{ padding: 28px; backdrop-filter: blur(8px); }
+    .glass{
+      border-radius: 18px;
+      border: 1px solid rgba(13,110,253,.12);
+      background: rgba(255,255,255,.82);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .hover-lift{ transition:transform .12s ease, box-shadow .2s ease }
+    .hover-lift:hover{ transform:translateY(-3px); box-shadow:0 16px 36px rgba(0,0,0,.10) }
+
+    .fade-in{animation:fadeIn .6s ease both}
+    .fade-in-delay{animation:fadeIn .7s ease .08s both}
+    .fade-in-up{ animation: fadeInUp .55s ease-out both }
+
+    @keyframes fadeIn{from{opacity:0; transform: translate3d(0,8px,0)} to{opacity:1; transform:none}}
+    @keyframes fadeInUp{from{opacity:0; transform: translate3d(0,8px,0)} to{opacity:1; transform: translate3d(0,0,0)}}
+
+    .form-control:focus{
+      border-color: rgba(13,110,253,.5);
+      box-shadow: 0 0 0 .25rem rgba(13,110,253,.15);
+    }
+    .btn-cta{ transition: transform .12s ease, box-shadow .2s ease; }
+    .btn-cta:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 10px 18px rgba(13,110,253,.18);
+    }
+
+    @media (max-width: 991.98px){
+      .sidebar{ height:auto; position: static; }
+      .auth-left{ padding: 24px }
+      .auth-right{ padding: 22px }
+    }
+    @media (prefers-reduced-motion: reduce){
+      .fade-in, .fade-in-delay, .fade-in-up, .hover-lift{ animation:none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">SIGMA</a>
+
+      {% if current_user and current_user.role in ['admin','konselor','mahasiswa'] %}
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarCollapse" aria-controls="sidebarCollapse" aria-expanded="false" aria-label="Toggle navigasi">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      {% endif %}
+
+      <div class="d-flex ms-auto">
+        {% if current_user %}
+          <span class="navbar-text me-3">👋 {{ current_user.username }} ({{ current_user.role }})</span>
+          <a class="btn btn-light btn-sm" href="{{ url_for('logout') }}">Logout</a>
+        {% else %}
+          <a class="btn btn-outline-light btn-sm me-2" href="{{ url_for('login') }}">Login</a>
+          <a class="btn btn-warning btn-sm" href="{{ url_for('register') }}">Register</a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+
+  <!-- Layout -->
+  <div class="container-fluid app-layout">
+    <div class="row">
+      {% if current_user and current_user.role in ['admin','konselor','mahasiswa'] %}
+      <!-- Sidebar -->
+      <aside class="col-lg-2 col-md-3">
+        <div id="sidebarCollapse" class="sidebar collapse d-lg-block">
+          <!-- Profile mini -->
+          <div class="profile-card d-flex align-items-center gap-3">
+            <div class="avatar-circle" aria-hidden="true">
+              {{ (current_user.username[0]|upper) if current_user and current_user.username else 'U' }}
+            </div>
+            <div class="flex-grow-1">
+              <div class="fw-semibold text-truncate">{{ current_user.username }}</div>
+              <span class="role-badge text-capitalize">{{ current_user.role }}</span>
+            </div>
+          </div>
+
+          <!-- Menu -->
+          {% if current_user.role == 'admin' %}
+            <h6>Menu Admin</h6>
+            <nav class="nav nav-vertical flex-column">
+              <a class="nav-link {% if request.endpoint == 'dashboard_admin' %}active{% endif %}" href="{{ url_for('dashboard_admin') }}">
+                <i class="fa-solid fa-gauge-high" aria-hidden="true"></i> Dashboard
+              </a>
+              <a class="nav-link {% if request.endpoint == 'kelola_user' %}active{% endif %}" href="{{ url_for('kelola_user') }}">
+                <i class="fa-solid fa-users-gear" aria-hidden="true"></i> Kelola User
+              </a>
+              <a class="nav-link {% if request.endpoint == 'laporan_sistem' %}active{% endif %}" href="{{ url_for('laporan_sistem') }}">
+                <i class="fa-solid fa-clipboard-list" aria-hidden="true"></i> Rekap Keluhan
+              </a>
+            </nav>
+
+          {% elif current_user.role == 'konselor' %}
+            <h6>Menu Konselor</h6>
+            <nav class="nav nav-vertical flex-column">
+              <a class="nav-link {% if request.endpoint == 'dashboard_konselor' %}active{% endif %}" href="{{ url_for('dashboard_konselor') }}">
+                <i class="fa-solid fa-briefcase" aria-hidden="true"></i> Dashboard
+              </a>
+              <a class="nav-link {% if request.endpoint == 'riwayat_keluhan_konselor' %}active{% endif %}" href="{{ url_for('riwayat_keluhan_konselor') }}">
+                <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> Riwayat Keluhan
+              </a>
+              <!-- Laporan Konselor -->
+              <a class="nav-link {% if request.endpoint in ['laporan_konselor','laporan_konselor_export','laporan_konselor_email','laporan_konselor_pdf','laporan_konselor_print'] %}active{% endif %}" href="{{ url_for('laporan_konselor') }}">
+                <i class="fa-solid fa-file-lines" aria-hidden="true"></i> Laporan Konselor
+              </a>
+            </nav>
+
+          {% elif current_user.role == 'mahasiswa' %}
+            <h6>Menu Mahasiswa</h6>
+            <nav class="nav nav-vertical flex-column">
+              <a class="nav-link {% if request.endpoint == 'dashboard_mahasiswa' %}active{% endif %}" href="{{ url_for('dashboard_mahasiswa') }}">
+                <i class="fa-solid fa-house" aria-hidden="true"></i> Dashboard
+              </a>
+              <a class="nav-link {% if request.endpoint == 'ajukan_keluhan' %}active{% endif %}" href="{{ url_for('ajukan_keluhan') }}">
+                <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Ajukan Keluhan
+              </a>
+              <a class="nav-link {% if request.endpoint == 'riwayat_keluhan' %}active{% endif %}" href="{{ url_for('riwayat_keluhan') }}">
+                <i class="fa-solid fa-scroll" aria-hidden="true"></i> Riwayat Keluhan
+              </a>
+            </nav>
+          {% endif %}
+        </div>
+      </aside>
+      {% endif %}
+
+      <!-- Main -->
+      <main class="{% if current_user and current_user.role in ['admin','konselor','mahasiswa'] %}col-lg-10 col-md-9{% else %}col-12{% endif %}">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              {% set cat = category if category in ['primary','secondary','success','danger','warning','info','light','dark'] else 'info' %}
+              <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <footer>
+    <p class="mb-0">&copy; 2025 SIGMA (Sistem Informasi Guardian Mahasiswa Aduan) • PBL 🚀</p>
+  </footer>
+
+  <!-- JS libs -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>
